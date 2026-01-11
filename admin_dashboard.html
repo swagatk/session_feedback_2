@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Left Column: Admin Account + Activities -->
+        <div class="left-col">
+            <div class="card">
+                <h3><i class="fas fa-user-shield"></i> Admin Account</h3>
+                <div class="user-info">
+                    <div class="user-avatar"><i class="fas fa-shield-halved"></i></div>
+                    <div class="admin-email">
+                        <small>Logged in as:</small>
+                        <span id="admin-email" class="user-email">Loading...</span>
+                    </div>
+                    <button class="secondary btn-block" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+
+            <!-- Activities Nav -->
+            <div class="card">
+                <h3><i class="fas fa-list-check"></i> Activities</h3>
+                <button class="secondary btn-block" id="nav-user-mgmt-btn"><i class="fas fa-users"></i> User Management</button>
+                <button class="secondary btn-block" id="nav-survey-mgmt-btn"><i class="fas fa-diagram-project"></i> Survey Management</button>
+            </div>
+        </div>
+
+        <!-- Center Column: User Management -->
+        <div class="center-col">
+            <div class="card" id="user-management-card" style="display:none;">
+                <h3><i class="fas fa-users"></i> User Management</h3>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="new-user-email" placeholder="user@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Temporary Password</label>
+                        <input type="password" id="new-user-password" placeholder="Min 6 characters">
+                    </div>
+                    <div class="form-group">
+                        <label>Role</label>
+                        <select id="new-user-role">
+                            <option value="user">User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="create-user-btn" class="btn-block"><i class="fas fa-plus"></i> Create User</button>
+                <p id="create-user-message" style="color:#e74c3c; margin-top:8px; font-size:13px;"></p>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-address-book"></i> Users</h3>
+                <div style="overflow-x:auto;">
+                    <table class="data-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card" id="survey-management-card" style="display:none;">
+                <h3><i class="fas fa-diagram-project"></i> Survey Management</h3>
+                <div style="overflow-x:auto; margin-bottom:12px;">
+                    <table class="data-table" id="user-survey-stats-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Active Surveys</th>
+                                <th>Finished Surveys</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="data-table" id="survey-list-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Owner</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="5" style="text-align:center;">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: System Note -->
+        <div class="right-col">
+            <div class="card">
+                <h3><i class="fas fa-circle-info"></i> Notes</h3>
+                <p style="font-size:14px; color:#555; line-height:1.5;">User enable/disable is enforced at app level. Creating users here also provisions app access metadata. Deleting users marks them inactive; deleting Firebase Auth accounts requires server-side admin privileges.</p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="js/admin-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Survey App - Login</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to Survey App</h1>
+        <div class="auth-form" id="auth-container">
+            <div id="login-form">
+                <h2>Login</h2>
+                <input type="email" id="login-email" placeholder="Email">
+                <input type="password" id="login-password" placeholder="Password">
+                <button id="login-btn">Login</button>
+                <div class="message" id="login-message"></div>
+                <p>Don't have an account? <span class="link" id="show-register">Register</span></p>
+                <p>Admin? <span class="link" id="show-admin-login">Login as Admin</span></p>
+            </div>
+
+            <div id="register-form" style="display:none;">
+                <h2>Register</h2>
+                <input type="email" id="reg-email" placeholder="Email">
+                <input type="password" id="reg-password" placeholder="Password">
+                <button id="register-btn">Register</button>
+                <div class="message" id="reg-message"></div>
+                <p>Already have an account? <span class="link" id="show-login">Login</span></p>
+            </div>
+            
+             <div id="admin-login-form" style="display:none;">
+                <h2>Admin Login</h2>
+                <input type="email" id="admin-email" placeholder="Admin Email">
+                <input type="password" id="admin-password" placeholder="Admin Password">
+                <button id="admin-login-btn">Login</button>
+                <div class="message" id="admin-message"></div>
+                 <p>Not an admin? <span class="link" id="back-to-login">Back to User Login</span></p>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="js/index.js"></script>
+</body>
+</html>

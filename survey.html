@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Survey App - Survey</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container" id="survey-container">
+        <h1 id="survey-title">Loading Survey...</h1>
+        <form id="survey-form">
+            <!-- Dynamic fields will be added here -->
+             <div id="survey-fields"></div>
+             
+             <button type="submit" id="submit-btn" style="display:none; margin-top: 20px;">Submit Feedback</button>
+        </form>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script type="module" src="js/survey.js"></script>
+</body>
+</html>

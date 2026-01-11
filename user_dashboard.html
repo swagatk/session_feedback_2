@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        
+        <!-- Left Column: Account -->
+        <div class="card">
+            <h3><i class="fas fa-user-circle"></i> Account Settings</h3>
+            <div class="user-info">
+                <div class="user-avatar" id="user-avatar">
+                   <i class="fas fa-user"></i>
+                </div>
+                <div class="admin-email">
+                    <small>Logged in as:</small>
+                    <span id="user-email" class="user-email">Loading...</span>
+                </div>
+                <button class="secondary btn-block" id="change-password-btn"><i class="fas fa-key"></i> Change Password</button>
+                <button class="secondary btn-block" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </div>
+
+        <!-- Center Column: Survey Management & Results -->
+        <div class="center-col">
+            
+            <!-- Create Survey Section -->
+            <div class="card">
+                <h3><i class="fas fa-file-alt"></i> Survey Management</h3>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Module/Session Name</label>
+                        <input type="text" id="session-name" placeholder="e.g., CS101 Week 5">
+                    </div>
+                    <div class="form-group">
+                        <label>Session Date</label>
+                        <input type="date" id="session-date">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-edit"></i> Customize Form Fields</label>
+                    <div id="active-fields-list">
+                        <!-- Fields populated by JS -->
+                    </div>
+                    
+                    <div class="add-field-links">
+                        <span class="add-link" onclick="window.addRatingField()"><i class="fas fa-plus"></i> Add Rating Field</span>
+                        <span class="add-link" onclick="window.addCommentField()"><i class="fas fa-plus"></i> Add Comment Field</span>
+                    </div>
+                </div>
+
+                <button id="create-survey-link-btn" class="btn-block">
+                    <i class="fas fa-plus"></i> Create New Survey Link
+                </button>
+            </div>
+
+            <!-- Active Surveys List -->
+            <div class="card" id="active-surveys-card" style="display:none;">
+                <h3><i class="fas fa-link"></i> Active Surveys</h3>
+                <div id="active-surveys-list">
+                    <!-- populated by JS -->
+                </div>
+            </div>
+
+            <!-- Feedback Submissions Section (Initially Hidden or Empty) -->
+            <div class="card" id="submissions-card" style="display:none;">
+                <h3><i class="fas fa-chart-bar"></i> Feedback Submissions</h3>
+                
+                <div style="background:#eef2f7; padding:10px; border-radius:4px; margin-bottom:15px; border:1px solid #dce4ec;">
+                    Viewing: <strong id="viewing-survey-title">...</strong> | Date: <span id="viewing-survey-date">...</span>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table class="data-table" id="submissions-table">
+                        <thead>
+                            <!-- Dynamic Headers -->
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style="margin-top: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+                    <button id="download-pdf-btn" class="secondary"><i class="fas fa-file-pdf"></i> Download Report (PDF)</button>
+                    <button id="download-excel-btn" class="secondary"><i class="fas fa-file-excel"></i> Download Report (Excel)</button>
+                    <button id="reset-feedback-btn" class="danger"><i class="fas fa-trash"></i> Delete Survey</button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column: Stats & History -->
+        <div class="right-col">
+            
+            <!-- Overall Rating -->
+            <div class="card rating-card" id="overall-rating-card" style="display:none;">
+                <h3><i class="fas fa-star"></i> Overall Rating</h3>
+                <div class="big-rating" id="avg-rating-display">0.0 / 5.0</div>
+                <div class="rating-sub">(Based on <span id="submission-count">0</span> submissions)</div>
+            </div>
+
+            <!-- Survey History -->
+            <div class="card">
+                <h3><i class="fas fa-history"></i> Survey History</h3>
+                <div class="history-list" id="survey-history-list">
+                    <!-- Loaded via JS -->
+                    <div style="padding:10px; color:#777; font-size:13px; text-align:center;">Loading...</div>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <!-- App Logic -->
+    <script type="module" src="js/user-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f7f6;
+    color: #333;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+h1, h2, h3 {
+    text-align: center;
+    color: #2c3e50;
+}
+
+/* Auth Pages */
+.auth-form {
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+select,
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 14px;
+}
+
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #3498db;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #3498db;
+    color: white;
+    font-size: 14px;
+    transition: background-color 0.3s;
+    font-weight: 500;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+button.secondary {
+    background-color: #95a5a6;
+}
+
+button.secondary:hover {
+    background-color: #7f8c8d;
+}
+
+button.danger {
+    background-color: #e74c3c;
+}
+
+button.danger:hover {
+    background-color: #c0392b;
+}
+
+.message {
+    text-align: center;
+    margin-top: 10px;
+    color: #e74c3c;
+}
+
+.link {
+    text-align: center;
+    color: #3498db;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* Survey Form Styles (Used in survey.html) */
+.survey-title {
+    margin-bottom: 30px; 
+    border-bottom: 2px solid #3498db; 
+    padding-bottom: 10px;
+}
+
+.form-field {
+    margin-bottom: 25px;
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 6px;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.form-field label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 16px;
+}
+
+/* Star Rating Visuals for Survey Takers */
+.star-rating-input {
+    display: flex;
+    flex-direction: row-reverse; /* Magic to make hover work from left but DOM is right-to-left */
+    justify-content: flex-end;
+    gap: 5px;
+}
+.star-rating-input input {
+    display: none;
+}
+.star-rating-input label {
+    font-size: 30px;
+    color: #ddd;
+    cursor: pointer;
+    margin: 0 !important; /* Override generic label margin */
+    transition: color 0.2s;
+}
+.star-rating-input input:checked ~ label,
+.star-rating-input label:hover,
+.star-rating-input label:hover ~ label {
+    color: #f1c40f;
+}
+
+#survey-container {
+    margin-top: 20px;
+}
