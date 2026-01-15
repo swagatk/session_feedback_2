@@ -1,8 +1,15 @@
-import { monitorAuthState, logoutUser, createUserAsAdmin } from './auth-service.js';
-import { ensureUserProfile, getAllUserProfiles, setUserStatus, deleteUserProfile, getUserProfileByEmail, getAllSurveys, deactivateSurvey, deleteSurveyAndResponses } from './db-service.js';
+import { monitorAuthState, logoutUser, createUserAsAdmin, sendResetEmail } from './auth-service.js';
+import { ensureUserProfile, getAllUserProfiles, setUserStatus, deleteUserProfile, getUserProfileByEmail, getAllSurveys, deactivateSurvey, deleteSurveyAndResponses, updateRecoveryEmail } from './db-service.js';
 
 let currentAdmin = null;
 const sections = {};
+let currentProfile = null;
+
+// Profile panel elements
+const profileCard = document.getElementById('profile-card');
+const profileAccountEmail = document.getElementById('profile-account-email');
+const profileRecoveryEmail = document.getElementById('profile-recovery-email');
+const profileMessage = document.getElementById('profile-message');
 
 monitorAuthState(async (user) => {
     if (user) {
@@ -15,7 +22,9 @@ monitorAuthState(async (user) => {
         }
         await ensureUserProfile(user.email, 'admin');
         currentAdmin = user;
+        currentProfile = profile || await ensureUserProfile(user.email, 'admin');
         document.getElementById('admin-email').textContent = user.email;
+        hydrateProfileCard();
         loadUsers();
         loadSurveyStats();
         showSection('users');
@@ -27,6 +36,42 @@ monitorAuthState(async (user) => {
 document.getElementById('logout-btn').addEventListener('click', logoutUser);
 document.getElementById('nav-user-mgmt-btn').addEventListener('click', () => showSection('users'));
 document.getElementById('nav-survey-mgmt-btn').addEventListener('click', () => showSection('surveys'));
+document.getElementById('nav-profile-btn').addEventListener('click', toggleProfileCard);
+
+document.getElementById('save-recovery-btn').addEventListener('click', async () => {
+    if (!currentAdmin) return;
+    const recoveryEmail = profileRecoveryEmail.value.trim();
+    profileMessage.style.color = '#e74c3c';
+    profileMessage.textContent = '';
+
+    if (!recoveryEmail) {
+        profileMessage.textContent = 'Please enter a recovery email.';
+        return;
+    }
+
+    try {
+        currentProfile = await updateRecoveryEmail(currentAdmin.email, recoveryEmail);
+        profileMessage.style.color = 'green';
+        profileMessage.textContent = 'Recovery email saved.';
+    } catch (err) {
+        console.error(err);
+        profileMessage.textContent = err.message || 'Failed to save recovery email.';
+    }
+});
+
+document.getElementById('send-reset-btn').addEventListener('click', async () => {
+    if (!currentAdmin) return;
+    profileMessage.style.color = '#e74c3c';
+    profileMessage.textContent = '';
+    try {
+        await sendResetEmail(currentAdmin.email);
+        profileMessage.style.color = 'green';
+        profileMessage.textContent = 'Reset link sent to the admin account email. Make sure that inbox exists.';
+    } catch (err) {
+        console.error(err);
+        profileMessage.textContent = err.message || 'Failed to send reset link.';
+    }
+});
 
 function showSection(key) {
     if (!sections.users) {
@@ -38,6 +83,22 @@ function showSection(key) {
     });
     if (sections[key]) {
         sections[key].scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+function toggleProfileCard() {
+    if (!profileCard) return;
+    const isHidden = profileCard.style.display === 'none' || profileCard.style.display === '';
+    profileCard.style.display = isHidden ? 'block' : 'none';
+    if (!isHidden) return;
+    profileCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function hydrateProfileCard() {
+    if (!currentAdmin || !profileAccountEmail) return;
+    profileAccountEmail.value = currentAdmin.email;
+    if (currentProfile && currentProfile.recoveryEmail) {
+        profileRecoveryEmail.value = currentProfile.recoveryEmail;
     }
 }
 

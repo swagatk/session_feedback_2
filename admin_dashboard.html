@@ -29,6 +29,25 @@
                 <h3><i class="fas fa-list-check"></i> Activities</h3>
                 <button class="secondary btn-block" id="nav-user-mgmt-btn"><i class="fas fa-users"></i> User Management</button>
                 <button class="secondary btn-block" id="nav-survey-mgmt-btn"><i class="fas fa-diagram-project"></i> Survey Management</button>
+                <button class="secondary btn-block" id="nav-profile-btn"><i class="fas fa-id-badge"></i> My Profile</button>
+            </div>
+
+            <div class="card" id="profile-card" style="display:none;">
+                <h3><i class="fas fa-id-card"></i> My Profile</h3>
+                <div class="form-group">
+                    <label>Account Email</label>
+                    <input type="email" id="profile-account-email" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Recovery Email (where you can receive reset instructions)</label>
+                    <input type="email" id="profile-recovery-email" placeholder="you@realmail.com">
+                </div>
+                <button class="btn-block" id="save-recovery-btn"><i class="fas fa-save"></i> Save Recovery Email</button>
+                <button class="secondary btn-block" id="send-reset-btn"><i class="fas fa-envelope"></i> Send Password Reset Link</button>
+                <p class="message" id="profile-message"></p>
+                <p style="font-size:12px; color:#666; line-height:1.4; margin-top:8px;">
+                    Note: Reset emails are sent to the account email registered in Firebase Auth. If <strong>admin@test.com</strong> is not a real inbox, use a real email for your admin account in Firebase.
+                </p>
             </div>
         </div>
 

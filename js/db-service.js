@@ -162,6 +162,19 @@ export async function ensureUserProfile(email, role = 'user', activeDefault = tr
     return data;
 }
 
+// Update or store a recovery email for an account (metadata only)
+export async function updateRecoveryEmail(email, recoveryEmail) {
+    const ref = doc(db, 'userProfiles', email);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+        // Create skeleton profile if missing so we can store metadata
+        await setDoc(ref, { email, role: 'user', active: true, deleted: false, createdAt: serverTimestamp(), recoveryEmail });
+        return { email, recoveryEmail };
+    }
+    await updateDoc(ref, { recoveryEmail });
+    return { ...snap.data(), recoveryEmail };
+}
+
 export async function getUserProfileByEmail(email) {
     const ref = doc(db, 'userProfiles', email);
     const snap = await getDoc(ref);
