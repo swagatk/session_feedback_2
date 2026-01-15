@@ -124,8 +124,6 @@ registerBtn.addEventListener('click', async () => {
     }
 });
 
-// Admin Login Handler (For now same as regular login but redirects to admin page)
-// In a real app, you'd check roles in the backend/custom claims
 adminLoginBtn.addEventListener('click', async () => {
     const email = document.getElementById('admin-email').value;
     const password = document.getElementById('admin-password').value;
@@ -137,14 +135,12 @@ adminLoginBtn.addEventListener('click', async () => {
     }
 
     try {
-        // Simple check for admin email (This is client-side only and insecure for real production)
-        // Ideally, check ID token claim
-        if (!email.includes('admin')) {
-             throw new Error("Not an authorized admin account (must contain 'admin' in email for demo)");
-        }
-
         await loginUser(email, password);
-        await ensureActiveAndProfile(email, 'admin');
+        const profile = await ensureActiveAndProfile(email, null);
+        if (!profile || profile.role !== 'admin') {
+            await signOutSilent();
+            throw new Error('You do not have admin access. Ask an admin to grant the admin role.');
+        }
         window.location.href = 'admin_dashboard.html';
     } catch (error) {
         messageEl.textContent = error.message;

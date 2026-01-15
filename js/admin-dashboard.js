@@ -148,7 +148,9 @@ async function loadUsers() {
         }
 
         let rows = '';
-        users.forEach(u => {
+        users
+            .filter(u => !u.deleted) // hide soft-deleted users from the UI list
+            .forEach(u => {
             const active = u.active !== false && !u.deleted;
             const pending = u.active === false && !u.deleted;
             const statusLabel = u.deleted ? 'Deleted' : pending ? 'Pending approval' : active ? 'Active' : 'Disabled';
