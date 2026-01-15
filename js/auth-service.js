@@ -6,7 +6,8 @@ import {
     onAuthStateChanged,
     updatePassword,
     EmailAuthProvider,
-    reauthenticateWithCredential
+    reauthenticateWithCredential,
+    sendPasswordResetEmail
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // Register a new user
@@ -38,6 +39,14 @@ export async function logoutUser() {
         console.error("Error signing out: ", error);
         throw error;
     }
+}
+
+// Send a password reset email to the given address
+export async function sendResetEmail(email) {
+    if (!email) {
+        throw new Error('Please enter your email to reset your password.');
+    }
+    await sendPasswordResetEmail(auth, email);
 }
 
 // Monitor auth state

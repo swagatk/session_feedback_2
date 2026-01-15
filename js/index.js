@@ -1,4 +1,4 @@
-import { loginUser, registerUser, logoutUser, signOutSilent } from './auth-service.js';
+import { loginUser, registerUser, logoutUser, signOutSilent, sendResetEmail } from './auth-service.js';
 import { ensureUserProfile, getUserProfileByEmail } from './db-service.js';
 
 // DOM Elements
@@ -9,6 +9,7 @@ const adminLoginForm = document.getElementById('admin-login-form');
 const loginBtn = document.getElementById('login-btn');
 const registerBtn = document.getElementById('register-btn');
 const adminLoginBtn = document.getElementById('admin-login-btn');
+const forgotPasswordBtn = document.getElementById('forgot-password-btn');
 
 const showRegisterLink = document.getElementById('show-register');
 const showLoginLink = document.getElementById('show-login');
@@ -60,6 +61,7 @@ loginBtn.addEventListener('click', async () => {
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
     const messageEl = document.getElementById('login-message');
+    messageEl.style.color = '#e74c3c';
 
     if (!email || !password) {
         messageEl.textContent = 'Please fill in all fields.';
@@ -75,6 +77,27 @@ loginBtn.addEventListener('click', async () => {
             window.location.href = 'user_dashboard.html';
         }
     } catch (error) {
+        messageEl.textContent = error.message;
+    }
+});
+
+// Forgot Password Handler
+forgotPasswordBtn.addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value;
+    const messageEl = document.getElementById('login-message');
+
+    if (!email) {
+        messageEl.style.color = '#e74c3c';
+        messageEl.textContent = 'Enter your registered email to reset your password.';
+        return;
+    }
+
+    try {
+        await sendResetEmail(email);
+        messageEl.style.color = 'green';
+        messageEl.textContent = 'Reset link sent. Check your email.';
+    } catch (error) {
+        messageEl.style.color = '#e74c3c';
         messageEl.textContent = error.message;
     }
 });
