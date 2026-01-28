@@ -112,6 +112,14 @@
             <!-- Survey History -->
             <div class="card">
                 <h3><i class="fas fa-history"></i> Survey History</h3>
+                
+                <div id="history-controls" style="display:none; padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                    <label style="font-size:13px; cursor:pointer; user-select:none;">
+                        <input type="checkbox" id="select-all-history"> Select All
+                    </label>
+                    <button id="bulk-delete-btn" class="danger btn-sm" style="visibility:hidden;">Delete Selected</button>
+                </div>
+
                 <div class="history-list" id="survey-history-list">
                     <!-- Loaded via JS -->
                     <div style="padding:10px; color:#777; font-size:13px; text-align:center;">Loading...</div>

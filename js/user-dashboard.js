@@ -1,5 +1,5 @@
 import { logoutUser, monitorAuthState, changePassword } from './auth-service.js';
-import { createSurvey, getUserSurveys, getSurveyResponses, deleteSurvey, deactivateSurvey as deactivateSurveyApi, deleteSurveyResponse, getUserProfileByEmail, ensureUserProfile } from './db-service.js';
+import { createSurvey, getUserSurveys, getSurveyResponses, deleteSurvey, deactivateSurvey as deactivateSurveyApi, deleteSurveyResponse, getUserProfileByEmail, ensureUserProfile, deleteSurveyAndResponses } from './db-service.js';
 import { exportToExcel } from './utils.js';
 
 let currentUser = null;
@@ -166,6 +166,15 @@ document.getElementById('create-survey-link-btn').addEventListener('click', asyn
 
 async function loadSurveyHistory() {
     const container = document.getElementById('survey-history-list');
+    const controls = document.getElementById('history-controls');
+    const selectAllChkbx = document.getElementById('select-all-history');
+    const bulkDelBtn = document.getElementById('bulk-delete-btn');
+
+    // Reset controls
+    if(controls) controls.style.display = 'none';
+    if(selectAllChkbx) selectAllChkbx.checked = false;
+    if(bulkDelBtn) bulkDelBtn.style.visibility = 'hidden';
+
     container.innerHTML = '<div style="text-align:center; padding:10px; color:#888;">Refreshing...</div>';
     
     try {
@@ -178,6 +187,8 @@ async function loadSurveyHistory() {
             return;
         }
 
+        if(controls) controls.style.display = 'flex';
+
         // Sort by date created desc
         surveys.sort((a, b) => b.createdAt - a.createdAt);
 
@@ -186,8 +197,25 @@ async function loadSurveyHistory() {
         surveys.forEach(survey => {
             const item = document.createElement('div');
             item.className = 'history-item';
-            // Parse title which we saved as "Name | Date"
-            // Handle legacy titles gracefully
+            // Override display for flex alignment with checkbox
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.gap = '10px';
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'history-checkbox';
+            checkbox.value = survey.id;
+            checkbox.onclick = (e) => {
+                e.stopPropagation();
+                updateBulkDeleteUI();
+            };
+
+            const content = document.createElement('div');
+            content.style.flex = '1';
+            content.style.overflow = 'hidden'; // facilitate text truncation
+
+            // Parse title
             let name = survey.title;
             let date = '';
             
@@ -197,14 +225,22 @@ async function loadSurveyHistory() {
                 date = parts[1].trim();
             }
             
-            item.innerHTML = `
+            content.innerHTML = `
                 <h4>${name}</h4>
                 <div class="history-meta">
                     <span>${date}</span>
                     <span style="color:#27ae60">View &raquo;</span>
                 </div>
             `;
-            item.onclick = () => loadSurveyDetails(survey);
+            
+            item.appendChild(checkbox);
+            item.appendChild(content);
+
+            // Clicking row (except checkbox) views details
+            item.onclick = (e) => {
+                if (e.target !== checkbox) loadSurveyDetails(survey);
+            };
+            
             container.appendChild(item);
         });
     } catch (e) {
@@ -212,6 +248,76 @@ async function loadSurveyHistory() {
         console.error(e);
     }
 }
+
+function updateBulkDeleteUI() {
+    const checkboxes = document.querySelectorAll('.history-checkbox');
+    const checked = document.querySelectorAll('.history-checkbox:checked');
+    const btn = document.getElementById('bulk-delete-btn');
+    const selectAll = document.getElementById('select-all-history');
+
+    if (btn) {
+        btn.style.visibility = checked.length > 0 ? 'visible' : 'hidden'; // Use visibility to allow layout to persist if needed or display
+        btn.textContent = `Delete (${checked.length})`;
+    }
+    
+    // Update Select All state
+    if (selectAll) {
+        selectAll.checked = checkboxes.length > 0 && checked.length === checkboxes.length;
+        selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+    }
+}
+
+// Wire up global controls once
+(function initHistoryControls() {
+    const selectAll = document.getElementById('select-all-history');
+    const bulkDel = document.getElementById('bulk-delete-btn');
+
+    if (selectAll) {
+        selectAll.onclick = () => {
+            const checkboxes = document.querySelectorAll('.history-checkbox');
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateBulkDeleteUI();
+        };
+    }
+
+    if (bulkDel) {
+        bulkDel.onclick = async () => {
+            const checked = document.querySelectorAll('.history-checkbox:checked');
+            if (checked.length === 0) return;
+
+            if (!confirm(`Are you sure you want to delete these ${checked.length} surveys? This implies deleting ALL responses and metrics for them. This cannot be undone.`)) {
+                return;
+            }
+
+            bulkDel.disabled = true;
+            bulkDel.textContent = 'Deleting...';
+
+            try {
+                // Execute deletions in parallel
+                const promises = Array.from(checked).map(cb => deleteSurveyAndResponses(cb.value));
+                await Promise.all(promises);
+                
+                await loadSurveyHistory();
+                
+                // Also clear current view if it was one of the deleted ones
+                if (currentSurveyDetails) {
+                    const deletedIds = Array.from(checked).map(cb => cb.value);
+                    if (deletedIds.includes(currentSurveyDetails.id)) {
+                        document.getElementById('submissions-card').style.display = 'none';
+                        document.getElementById('overall-rating-card').style.display = 'none';
+                        currentSurveyDetails = null;
+                    }
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Partial error during bulk delete. Check console.");
+                loadSurveyHistory(); // refresh anyway
+            } finally {
+                bulkDel.disabled = false;
+            }
+        };
+    }
+})();
 
 // -----------------------------------------------------------------------------
 // Active Surveys Render & Actions
