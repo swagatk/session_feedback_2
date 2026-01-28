@@ -454,45 +454,75 @@ document.getElementById('download-pdf-btn').onclick = async () => {
     const surveyDate = document.getElementById('viewing-survey-date').textContent || 'N/A';
     const avgRating = document.getElementById('avg-rating-display').textContent;
     
-    // Build HTML content string
-    let htmlContent = `
-        <div style="padding: 20px; font-family: Arial, sans-serif; background: white;">
-            <h2 style="margin-top: 0; color: #2c3e50;">${surveyName} - Feedback Report</h2>
-            <p style="margin: 5px 0;">Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}</p>
-            <p style="margin: 5px 0 20px 0;">Average Rating: ${avgRating} | Total Responses: ${currentReportRows.length}</p>
-            <table style="width: 100%; border-collapse: collapse; font-size: 11px; background: white;">
-                <thead>
-                    <tr>
-    `;
+    // Build a real DOM node for html2pdf
+    const wrapper = document.createElement('div');
+    wrapper.style.position = 'fixed';
+    wrapper.style.left = '0';
+    wrapper.style.top = '0';
+    wrapper.style.width = '1000px';
+    wrapper.style.padding = '20px';
+    wrapper.style.background = '#fff';
+    wrapper.style.color = '#000';
+    wrapper.style.fontFamily = 'Arial, sans-serif';
+    wrapper.style.fontSize = '11px';
+    wrapper.style.zIndex = '-1';
+    wrapper.style.opacity = '0';
     
-    // Add header columns (exclude Actions)
+    const heading = document.createElement('h2');
+    heading.textContent = `${surveyName} - Feedback Report`;
+    heading.style.marginTop = '0';
+    heading.style.color = '#2c3e50';
+    wrapper.appendChild(heading);
+
+    const meta = document.createElement('p');
+    meta.style.margin = '5px 0';
+    meta.textContent = `Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}`;
+    wrapper.appendChild(meta);
+
+    const stats = document.createElement('p');
+    stats.style.margin = '5px 0 20px 0';
+    stats.textContent = `Average Rating: ${avgRating} | Total Responses: ${currentReportRows.length}`;
+    wrapper.appendChild(stats);
+
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.fontSize = '11px';
+    table.style.background = '#fff';
+
+    const thead = document.createElement('thead');
+    const headRow = document.createElement('tr');
     currentReportColumns.forEach(col => {
-        htmlContent += `<th style="border: 1px solid #000; padding: 8px; background: #f0f0f0; color: #000; text-align: left;">${col}</th>`;
+        const th = document.createElement('th');
+        th.textContent = col;
+        th.style.border = '1px solid #000';
+        th.style.padding = '8px';
+        th.style.background = '#f0f0f0';
+        th.style.color = '#000';
+        th.style.textAlign = 'left';
+        headRow.appendChild(th);
     });
-    
-    htmlContent += `
-                    </tr>
-                </thead>
-                <tbody>
-    `;
-    
-    // Add data rows
+    thead.appendChild(headRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
     currentReportRows.forEach(row => {
-        htmlContent += '<tr>';
+        const tr = document.createElement('tr');
         currentReportColumns.forEach(col => {
-            const value = row[col] ?? '-';
-            htmlContent += `<td style="border: 1px solid #ddd; padding: 6px; color: #000;">${value}</td>`;
+            const td = document.createElement('td');
+            td.textContent = row[col] ?? '-';
+            td.style.border = '1px solid #ddd';
+            td.style.padding = '6px';
+            td.style.color = '#000';
+            tr.appendChild(td);
         });
-        htmlContent += '</tr>';
+        tbody.appendChild(tr);
     });
-    
-    htmlContent += `
-                </tbody>
-            </table>
-        </div>
-    `;
-    
-    // Generate PDF directly from HTML string
+    table.appendChild(tbody);
+
+    wrapper.appendChild(table);
+    document.body.appendChild(wrapper);
+
     const opt = {
         margin: 0.5,
         filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
@@ -510,10 +540,12 @@ document.getElementById('download-pdf-btn').onclick = async () => {
     };
 
     try {
-        await html2pdf().set(opt).from(htmlContent).save();
+        await html2pdf().set(opt).from(wrapper).save();
     } catch (err) {
         console.error('PDF generation error:', err);
         alert('Failed to generate PDF: ' + err.message);
+    } finally {
+        wrapper.remove();
     }
 };
 
