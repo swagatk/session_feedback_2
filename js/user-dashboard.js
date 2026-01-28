@@ -492,15 +492,7 @@ document.getElementById('download-pdf-btn').onclick = async () => {
         </div>
     `;
     
-    // Create temporary element
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-    tempDiv.style.position = 'absolute';
-    tempDiv.style.left = '-9999px';
-    tempDiv.style.top = '0';
-    document.body.appendChild(tempDiv);
-    
-    // Generate PDF
+    // Generate PDF directly from HTML string
     const opt = {
         margin: 0.5,
         filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
@@ -518,11 +510,9 @@ document.getElementById('download-pdf-btn').onclick = async () => {
     };
 
     try {
-        await html2pdf().set(opt).from(tempDiv.firstChild).save();
-        document.body.removeChild(tempDiv);
+        await html2pdf().set(opt).from(htmlContent).save();
     } catch (err) {
         console.error('PDF generation error:', err);
-        document.body.removeChild(tempDiv);
         alert('Failed to generate PDF: ' + err.message);
     }
 };
