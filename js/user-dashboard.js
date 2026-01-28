@@ -451,9 +451,12 @@ document.getElementById('download-pdf-btn').onclick = () => {
     }
 
     const surveyName = currentSurveyDetails.title?.split('|')[0]?.trim() || currentSurveyDetails.title || 'Feedback_Report';
+    
+    console.log('Generating PDF with', currentReportRows.length, 'rows and', currentReportColumns.length, 'columns');
+    
     const printable = document.createElement('div');
-    printable.style.position = 'fixed';
-    printable.style.left = '-9999px';
+    printable.style.position = 'absolute';
+    printable.style.left = '0';
     printable.style.top = '0';
     printable.style.width = '1100px';
     printable.style.background = '#fff';
@@ -461,6 +464,9 @@ document.getElementById('download-pdf-btn').onclick = () => {
     printable.style.padding = '24px';
     printable.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
     printable.style.fontSize = '12px';
+    printable.style.zIndex = '-1000';
+    printable.style.opacity = '0';
+    printable.style.pointerEvents = 'none';
 
     const titleEl = document.createElement('h2');
     titleEl.textContent = `${surveyName} - Feedback Report`;
@@ -509,17 +515,24 @@ document.getElementById('download-pdf-btn').onclick = () => {
     printable.appendChild(table);
     document.body.appendChild(printable);
 
-    const opt = {
-        margin: 0.5,
-        filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-    };
+    // Allow browser to render before capturing
+    setTimeout(() => {
+        const opt = {
+            margin: 0.5,
+            filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, logging: false, useCORS: true },
+            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
+        };
 
-    html2pdf().set(opt).from(printable).save().finally(() => {
-        printable.remove();
-    });
+        html2pdf().set(opt).from(printable).save().then(() => {
+            printable.remove();
+        }).catch(err => {
+            console.error('PDF generation failed:', err);
+            printable.remove();
+            alert('Failed to generate PDF. Check console for details.');
+        });
+    }, 100);
 };
 
 // Report Excel download
