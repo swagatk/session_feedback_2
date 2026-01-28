@@ -436,7 +436,7 @@ async function deactivateSurvey(id) {
 }
 
 // PDF Export
-document.getElementById('download-pdf-btn').onclick = () => {
+document.getElementById('download-pdf-btn').onclick = async () => {
     if (typeof html2pdf === 'undefined') {
         alert('PDF Library not loaded. Please refresh.');
         return;
@@ -451,88 +451,86 @@ document.getElementById('download-pdf-btn').onclick = () => {
     }
 
     const surveyName = currentSurveyDetails.title?.split('|')[0]?.trim() || currentSurveyDetails.title || 'Feedback_Report';
-    
-    console.log('Generating PDF with', currentReportRows.length, 'rows and', currentReportColumns.length, 'columns');
-    
-    const printable = document.createElement('div');
-    printable.style.position = 'absolute';
-    printable.style.left = '0';
-    printable.style.top = '0';
-    printable.style.width = '1100px';
-    printable.style.background = '#fff';
-    printable.style.color = '#000';
-    printable.style.padding = '24px';
-    printable.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
-    printable.style.fontSize = '12px';
-    printable.style.zIndex = '-1000';
-    printable.style.opacity = '0';
-    printable.style.pointerEvents = 'none';
-
-    const titleEl = document.createElement('h2');
-    titleEl.textContent = `${surveyName} - Feedback Report`;
-    titleEl.style.marginTop = '0';
-    printable.appendChild(titleEl);
-
-    const metaEl = document.createElement('p');
     const surveyDate = document.getElementById('viewing-survey-date').textContent || 'N/A';
-    metaEl.textContent = `Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}`;
-    printable.appendChild(metaEl);
-
-    const statsEl = document.createElement('p');
-    statsEl.textContent = `Average Rating: ${document.getElementById('avg-rating-display').textContent} | Responses: ${currentReportRows.length}`;
-    printable.appendChild(statsEl);
-
-    const table = document.createElement('table');
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
-    table.style.marginTop = '20px';
-
-    const headerRow = document.createElement('tr');
-    currentReportColumns.forEach(col => {
-        const th = document.createElement('th');
-        th.textContent = col;
-        th.style.border = '1px solid #ddd';
-        th.style.background = '#f0f3f8';
+    const avgRating = document.getElementById('avg-rating-display').textContent;
+    
+    // Clone and modify the existing visible table
+    const originalTable = document.getElementById('submissions-table');
+    const clonedTable = originalTable.cloneNode(true);
+    
+    // Remove the "Actions" column from the cloned table
+    const headerCells = clonedTable.querySelectorAll('thead th');
+    if (headerCells.length > 0) {
+        headerCells[headerCells.length - 1].remove();
+    }
+    
+    const rows = clonedTable.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length > 0) {
+            cells[cells.length - 1].remove();
+        }
+    });
+    
+    // Create wrapper with header info
+    const wrapper = document.createElement('div');
+    wrapper.style.padding = '20px';
+    wrapper.style.backgroundColor = '#fff';
+    wrapper.style.color = '#000';
+    wrapper.style.fontFamily = 'Arial, sans-serif';
+    
+    wrapper.innerHTML = `
+        <h2 style="margin-top: 0; color: #2c3e50;">${surveyName} - Feedback Report</h2>
+        <p style="margin: 5px 0;">Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}</p>
+        <p style="margin: 5px 0 20px 0;">Average Rating: ${avgRating} | Total Responses: ${currentReportRows.length}</p>
+    `;
+    
+    // Style the cloned table
+    clonedTable.style.width = '100%';
+    clonedTable.style.borderCollapse = 'collapse';
+    clonedTable.style.fontSize = '11px';
+    
+    const thCells = clonedTable.querySelectorAll('th');
+    thCells.forEach(th => {
+        th.style.border = '1px solid #000';
         th.style.padding = '8px';
-        th.style.textAlign = 'left';
-        th.style.fontWeight = '600';
-        headerRow.appendChild(th);
+        th.style.backgroundColor = '#f0f0f0';
+        th.style.color = '#000';
     });
-    table.appendChild(headerRow);
-
-    currentReportRows.forEach(row => {
-        const tr = document.createElement('tr');
-        currentReportColumns.forEach(col => {
-            const td = document.createElement('td');
-            td.textContent = row[col] ?? '-';
-            td.style.border = '1px solid #eee';
-            td.style.padding = '8px';
-            tr.appendChild(td);
-        });
-        table.appendChild(tr);
+    
+    const tdCells = clonedTable.querySelectorAll('td');
+    tdCells.forEach(td => {
+        td.style.border = '1px solid #ddd';
+        td.style.padding = '6px';
+        td.style.color = '#000';
     });
+    
+    wrapper.appendChild(clonedTable);
+    
+    // Generate PDF
+    const opt = {
+        margin: [0.5, 0.5, 0.5, 0.5],
+        filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: { 
+            scale: 2,
+            logging: true,
+            letterRendering: true,
+            useCORS: true
+        },
+        jsPDF: { 
+            unit: 'in', 
+            format: 'a4', 
+            orientation: 'landscape' 
+        }
+    };
 
-    printable.appendChild(table);
-    document.body.appendChild(printable);
-
-    // Allow browser to render before capturing
-    setTimeout(() => {
-        const opt = {
-            margin: 0.5,
-            filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, logging: false, useCORS: true },
-            jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
-        };
-
-        html2pdf().set(opt).from(printable).save().then(() => {
-            printable.remove();
-        }).catch(err => {
-            console.error('PDF generation failed:', err);
-            printable.remove();
-            alert('Failed to generate PDF. Check console for details.');
-        });
-    }, 100);
+    try {
+        await html2pdf().set(opt).from(wrapper).save();
+    } catch (err) {
+        console.error('PDF generation error:', err);
+        alert('Failed to generate PDF: ' + err.message);
+    }
 };
 
 // Report Excel download
