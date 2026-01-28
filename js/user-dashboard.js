@@ -8,6 +8,10 @@ let cachedSurveys = [];
 let currentSurveyDetails = null;
 let currentReportRows = [];
 
+// Ensure shared links keep the repo folder when hosted under username.github.io/<repo>
+const appBasePath = window.location.pathname.replace(/\/[^\/]*$/, '');
+const buildSurveyLink = (surveyId) => `${window.location.origin}${appBasePath}/survey.html?id=${surveyId}`;
+
 // Default Template Fields
 const DEFAULT_FIELDS = [
     { type: 'rating', label: 'Clarity of Content' },
@@ -138,7 +142,7 @@ document.getElementById('create-survey-link-btn').addEventListener('click', asyn
         const newSurveyId = await createSurvey(currentUser.email, title, currentFields);
         
         // Copy to clipboard
-        const link = `${window.location.origin}/survey.html?id=${newSurveyId}`;
+        const link = buildSurveyLink(newSurveyId);
         try {
             await navigator.clipboard.writeText(link);
             alert("Survey Created! Link copied to clipboard:\n" + link);
@@ -236,7 +240,7 @@ function renderActiveSurveys(surveys) {
             date = parts[1].trim();
         }
 
-        const link = `${window.location.origin}/survey.html?id=${survey.id}`;
+        const link = buildSurveyLink(survey.id);
 
         wrapper.innerHTML = `
             <div style="flex:1; min-width: 220px;">
