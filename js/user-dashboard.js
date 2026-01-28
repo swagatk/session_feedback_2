@@ -7,6 +7,7 @@ let currentFields = [];
 let cachedSurveys = [];
 let currentSurveyDetails = null;
 let currentReportRows = [];
+let currentReportColumns = [];
 
 // Ensure shared links keep the repo folder when hosted under username.github.io/<repo>
 const appBasePath = window.location.pathname.replace(/\/[^\/]*$/, '');
@@ -323,6 +324,8 @@ async function loadSurveyDetails(survey) {
         document.getElementById('submission-count').textContent = responses.length;
 
         if (responses.length === 0) {
+            currentReportRows = [];
+            currentReportColumns = [];
             tableBody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px;">No feedback submitted yet.</td></tr>';
             document.getElementById('avg-rating-display').textContent = "0.0 / 5.0";
             return;
@@ -359,6 +362,7 @@ async function loadSurveyDetails(survey) {
         let totalRatingCount = 0;
 
         currentReportRows = [];
+        currentReportColumns = [...columns, 'Submitted'];
 
         let rowsHtml = '';
         responses.forEach(res => {
@@ -433,35 +437,88 @@ async function deactivateSurvey(id) {
 
 // PDF Export
 document.getElementById('download-pdf-btn').onclick = () => {
-    const table = document.getElementById('submissions-table');
-    const title = document.getElementById('viewing-survey-title').textContent;
-    
     if (typeof html2pdf === 'undefined') {
-        alert("PDF Library not loaded. Please refresh.");
+        alert('PDF Library not loaded. Please refresh.');
+        return;
+    }
+    if (!currentSurveyDetails) {
+        alert('Select a survey to download its report.');
+        return;
+    }
+    if (!currentReportRows || currentReportRows.length === 0) {
+        alert('No responses to export.');
         return;
     }
 
-    // Temporarily hide actions column on the real table for capture
-    const hidden = [];
-    const actionCells = table.querySelectorAll('th:last-child, td:last-child');
-    actionCells.forEach(cell => {
-        hidden.push({ cell, display: cell.style.display });
-        cell.style.display = 'none';
+    const surveyName = currentSurveyDetails.title?.split('|')[0]?.trim() || currentSurveyDetails.title || 'Feedback_Report';
+    const printable = document.createElement('div');
+    printable.style.position = 'fixed';
+    printable.style.left = '-9999px';
+    printable.style.top = '0';
+    printable.style.width = '1100px';
+    printable.style.background = '#fff';
+    printable.style.color = '#000';
+    printable.style.padding = '24px';
+    printable.style.fontFamily = 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif';
+    printable.style.fontSize = '12px';
+
+    const titleEl = document.createElement('h2');
+    titleEl.textContent = `${surveyName} - Feedback Report`;
+    titleEl.style.marginTop = '0';
+    printable.appendChild(titleEl);
+
+    const metaEl = document.createElement('p');
+    const surveyDate = document.getElementById('viewing-survey-date').textContent || 'N/A';
+    metaEl.textContent = `Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}`;
+    printable.appendChild(metaEl);
+
+    const statsEl = document.createElement('p');
+    statsEl.textContent = `Average Rating: ${document.getElementById('avg-rating-display').textContent} | Responses: ${currentReportRows.length}`;
+    printable.appendChild(statsEl);
+
+    const table = document.createElement('table');
+    table.style.width = '100%';
+    table.style.borderCollapse = 'collapse';
+    table.style.marginTop = '20px';
+
+    const headerRow = document.createElement('tr');
+    currentReportColumns.forEach(col => {
+        const th = document.createElement('th');
+        th.textContent = col;
+        th.style.border = '1px solid #ddd';
+        th.style.background = '#f0f3f8';
+        th.style.padding = '8px';
+        th.style.textAlign = 'left';
+        th.style.fontWeight = '600';
+        headerRow.appendChild(th);
+    });
+    table.appendChild(headerRow);
+
+    currentReportRows.forEach(row => {
+        const tr = document.createElement('tr');
+        currentReportColumns.forEach(col => {
+            const td = document.createElement('td');
+            td.textContent = row[col] ?? '-';
+            td.style.border = '1px solid #eee';
+            td.style.padding = '8px';
+            tr.appendChild(td);
+        });
+        table.appendChild(tr);
     });
 
+    printable.appendChild(table);
+    document.body.appendChild(printable);
+
     const opt = {
-        margin:       0.5,
-        filename:     `Feedback_${title.replace(/\s+/g, '_')}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2 },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+        margin: 0.5,
+        filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'landscape' }
     };
 
-    html2pdf().set(opt).from(table).save().finally(() => {
-        // Restore actions column
-        hidden.forEach(({ cell, display }) => {
-            cell.style.display = display;
-        });
+    html2pdf().set(opt).from(printable).save().finally(() => {
+        printable.remove();
     });
 };
 
