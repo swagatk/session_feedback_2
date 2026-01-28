@@ -1,4 +1,4 @@
-import { getSurveyById, saveSurveyResponse, hasResponseFromIp } from './db-service.js';
+import { getSurveyById, saveSurveyResponse } from './db-service.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const surveyId = urlParams.get('id');
@@ -8,7 +8,6 @@ const formEl = document.getElementById('survey-form');
 const fieldsContainer = document.getElementById('survey-fields');
 const messageEl = document.getElementById('message');
 const submitBtn = document.getElementById('submit-btn');
-let clientIp = null;
 
 async function init() {
     if (!surveyId) {
@@ -17,7 +16,15 @@ async function init() {
         return;
     }
 
-    await fetchClientIp();
+    // New Duplicate Check: Use LocalStorage instead of IP
+    // IP check blocks everyone on the same University/Office network (same public IP).
+    const storageKey = `survey_submitted_${surveyId}`;
+    if (localStorage.getItem(storageKey)) {
+        titleEl.textContent = "Submission Already Received";
+        messageEl.textContent = "You have already submitted feedback for this session.";
+        formEl.style.display = 'none';
+        return;
+    }
 
     try {
         const survey = await getSurveyById(surveyId);
@@ -27,17 +34,6 @@ async function init() {
             return;
         }
 
-        // If we have an IP, block duplicate submissions
-        if (clientIp) {
-            const alreadySubmitted = await hasResponseFromIp(surveyId, clientIp);
-            if (alreadySubmitted) {
-                titleEl.textContent = "Submission Already Received";
-                messageEl.textContent = "Only one submission is allowed from this device.";
-                formEl.style.display = 'none';
-                return;
-            }
-        }
-
         renderForm(survey);
     } catch (error) {
         console.error(error);
@@ -45,19 +41,10 @@ async function init() {
         messageEl.textContent = "Failed to load survey.";
     }
 }
-
-async function fetchClientIp() {
-    try {
-        const res = await fetch('https://api.ipify.org?format=json');
-        const data = await res.json();
-        clientIp = data.ip || null;
-    } catch (e) {
-        console.warn('Could not fetch IP address for duplicate submission check.', e);
-        clientIp = null;
-    }
-}
+// IP Check removed
 
 function renderForm(survey) {
+
     // Block deactivated surveys
     if (survey.active === false) {
         titleEl.textContent = "Survey Closed";
@@ -137,16 +124,19 @@ formEl.addEventListener('submit', async (e) => {
     }
 
     try {
-        if (clientIp) {
-            const alreadySubmitted = await hasResponseFromIp(surveyId, clientIp);
-            if (alreadySubmitted) {
-                messageEl.textContent = "Only one submission is allowed from this device.";
-                formEl.style.display = 'none';
-                return;
-            }
+        const storageKey = `survey_submitted_${surveyId}`;
+        /* Double-check before submitting */
+        if (localStorage.getItem(storageKey)) {
+             messageEl.textContent = "You have already submitted feedback.";
+             formEl.style.display = 'none';
+             return;
         }
 
-        await saveSurveyResponse(surveyId, data, clientIp);
+        await saveSurveyResponse(surveyId, data); // No IP passed
+        
+        // Mark as submitted locally
+        localStorage.setItem(storageKey, 'true');
+        
         formEl.style.display = 'none';
         titleEl.textContent = "Thank You!";
         messageEl.style.color = "green";
