@@ -454,69 +454,61 @@ document.getElementById('download-pdf-btn').onclick = async () => {
     const surveyDate = document.getElementById('viewing-survey-date').textContent || 'N/A';
     const avgRating = document.getElementById('avg-rating-display').textContent;
     
-    // Clone and modify the existing visible table
-    const originalTable = document.getElementById('submissions-table');
-    const clonedTable = originalTable.cloneNode(true);
-    
-    // Remove the "Actions" column from the cloned table
-    const headerCells = clonedTable.querySelectorAll('thead th');
-    if (headerCells.length > 0) {
-        headerCells[headerCells.length - 1].remove();
-    }
-    
-    const rows = clonedTable.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        if (cells.length > 0) {
-            cells[cells.length - 1].remove();
-        }
-    });
-    
-    // Create wrapper with header info
-    const wrapper = document.createElement('div');
-    wrapper.style.padding = '20px';
-    wrapper.style.backgroundColor = '#fff';
-    wrapper.style.color = '#000';
-    wrapper.style.fontFamily = 'Arial, sans-serif';
-    
-    wrapper.innerHTML = `
-        <h2 style="margin-top: 0; color: #2c3e50;">${surveyName} - Feedback Report</h2>
-        <p style="margin: 5px 0;">Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}</p>
-        <p style="margin: 5px 0 20px 0;">Average Rating: ${avgRating} | Total Responses: ${currentReportRows.length}</p>
+    // Build HTML content string
+    let htmlContent = `
+        <div style="padding: 20px; font-family: Arial, sans-serif; background: white;">
+            <h2 style="margin-top: 0; color: #2c3e50;">${surveyName} - Feedback Report</h2>
+            <p style="margin: 5px 0;">Session Date: ${surveyDate} | Generated: ${new Date().toLocaleString()}</p>
+            <p style="margin: 5px 0 20px 0;">Average Rating: ${avgRating} | Total Responses: ${currentReportRows.length}</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px; background: white;">
+                <thead>
+                    <tr>
     `;
     
-    // Style the cloned table
-    clonedTable.style.width = '100%';
-    clonedTable.style.borderCollapse = 'collapse';
-    clonedTable.style.fontSize = '11px';
-    
-    const thCells = clonedTable.querySelectorAll('th');
-    thCells.forEach(th => {
-        th.style.border = '1px solid #000';
-        th.style.padding = '8px';
-        th.style.backgroundColor = '#f0f0f0';
-        th.style.color = '#000';
+    // Add header columns (exclude Actions)
+    currentReportColumns.forEach(col => {
+        htmlContent += `<th style="border: 1px solid #000; padding: 8px; background: #f0f0f0; color: #000; text-align: left;">${col}</th>`;
     });
     
-    const tdCells = clonedTable.querySelectorAll('td');
-    tdCells.forEach(td => {
-        td.style.border = '1px solid #ddd';
-        td.style.padding = '6px';
-        td.style.color = '#000';
+    htmlContent += `
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    // Add data rows
+    currentReportRows.forEach(row => {
+        htmlContent += '<tr>';
+        currentReportColumns.forEach(col => {
+            const value = row[col] ?? '-';
+            htmlContent += `<td style="border: 1px solid #ddd; padding: 6px; color: #000;">${value}</td>`;
+        });
+        htmlContent += '</tr>';
     });
     
-    wrapper.appendChild(clonedTable);
+    htmlContent += `
+                </tbody>
+            </table>
+        </div>
+    `;
+    
+    // Create temporary element
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    tempDiv.style.position = 'absolute';
+    tempDiv.style.left = '-9999px';
+    tempDiv.style.top = '0';
+    document.body.appendChild(tempDiv);
     
     // Generate PDF
     const opt = {
-        margin: [0.5, 0.5, 0.5, 0.5],
+        margin: 0.5,
         filename: `Feedback_${surveyName.replace(/\s+/g, '_')}.pdf`,
         image: { type: 'jpeg', quality: 0.95 },
         html2canvas: { 
             scale: 2,
-            logging: true,
-            letterRendering: true,
-            useCORS: true
+            useCORS: true,
+            logging: false
         },
         jsPDF: { 
             unit: 'in', 
@@ -526,9 +518,11 @@ document.getElementById('download-pdf-btn').onclick = async () => {
     };
 
     try {
-        await html2pdf().set(opt).from(wrapper).save();
+        await html2pdf().set(opt).from(tempDiv.firstChild).save();
+        document.body.removeChild(tempDiv);
     } catch (err) {
         console.error('PDF generation error:', err);
+        document.body.removeChild(tempDiv);
         alert('Failed to generate PDF: ' + err.message);
     }
 };
