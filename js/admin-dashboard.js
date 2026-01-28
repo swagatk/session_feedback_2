@@ -129,6 +129,19 @@ document.getElementById('create-user-btn').addEventListener('click', async () =>
         loadUsers();
     } catch (e) {
         console.error(e);
+        if(e.code === 'auth/email-already-in-use') {
+            try {
+                // If user exists in Auth but not in our profile DB, just add the profile
+                await ensureUserProfile(email, role);
+                messageEl.style.color = 'green';
+                messageEl.textContent = 'Existing Auth user linked to profile system.';
+                loadUsers();
+                return;
+            } catch(subErr) {
+                 messageEl.textContent = 'User exists in Auth but failed to link profile: ' + subErr.message;
+                 return;
+            }
+        }
         messageEl.textContent = e.message || 'Failed to create user.';
     }
 });
