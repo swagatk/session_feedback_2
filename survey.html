@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Survey App - Survey</title>
     <link rel="stylesheet" href="css/main.css">
+    
+    <!-- EmailJS SDK -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+       (function(){
+          // Initialize EmailJS with your Public Key
+          emailjs.init("Ln-snatCWz9w2RZiC"); // TODO: Replace with your actual Public Key
+       })();
+    </script>
 </head>
 <body>
     <div class="container" id="survey-container">

@@ -144,13 +144,32 @@ function renderAuthUI(survey) {
             userEmail = email;
             verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             
-            console.log(`[SIMULATION] Sending Email to ${email} with code: ${verificationCode}`);
-            alert(`[SIMULATION] Email Sent!\n\nTo ensure privacy in this demo, we won't actually send an email.\n\nYour Verification Code is: ${verificationCode}\n\nPlease enter this code to proceed.`);
+            // EmailJS Configuration - REPLACE THESE
+            const SERVICE_ID = 'service_ivl2px2';
+            const TEMPLATE_ID = 'template_as2qt1e'; 
 
-            // Move to next step
-            document.getElementById('email-step').style.display = 'none';
-            document.getElementById('code-step').style.display = 'block';
-            document.getElementById('code-msg').textContent = `Code sent to ${email}`;
+            try {
+                btn.textContent = "Sending Email...";
+                // Using global emailjs object loaded in HTML
+                await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+                    to_email: userEmail,
+                    code: verificationCode,
+                    survey_title: survey.title.split('|')[0].trim() || 'Session Feedback'
+                });
+                
+                alert(`Verification code sent to ${email}`);
+                
+                // Move to next step
+                document.getElementById('email-step').style.display = 'none';
+                document.getElementById('code-step').style.display = 'block';
+                document.getElementById('code-msg').textContent = `Code sent to ${email}`;
+
+            } catch (err) {
+                console.error('EmailJS Error:', err);
+                alert("Failed to send email. Please check console or try again.");
+                btn.disabled = false;
+                btn.textContent = "Send Verification Code";
+            }
 
         } catch (error) {
             console.error(error);
@@ -177,9 +196,34 @@ function renderAuthUI(survey) {
         }
     };
 
-    document.getElementById('resend-link').onclick = (e) => {
+    document.getElementById('resend-link').onclick = async (e) => {
         e.preventDefault();
-        alert(`Your Verification Code is: ${verificationCode}`);
+        
+        // Resend logic
+        if (!verificationCode || !userEmail) return;
+        
+        const link = document.getElementById('resend-link');
+        const originalText = link.textContent;
+        link.textContent = 'Sending...';
+        link.style.pointerEvents = 'none';
+
+        try {
+            const SERVICE_ID = 'YOUR_SERVICE_ID';
+            const TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; 
+            
+            await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+                to_email: userEmail,
+                code: verificationCode,
+                survey_title: survey.title.split('|')[0].trim() || 'Session Feedback'
+            });
+            alert(`Code re-sent to ${userEmail}`);
+        } catch(err) {
+            console.error(err);
+            alert("Failed to resend email.");
+        } finally {
+            link.textContent = originalText;
+            link.style.pointerEvents = 'auto';
+        }
     };
 }
 
