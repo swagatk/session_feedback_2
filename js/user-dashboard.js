@@ -126,6 +126,7 @@ window.addCommentField = () => {
 document.getElementById('create-survey-link-btn').addEventListener('click', async () => {
     const sessionName = document.getElementById('session-name').value;
     const sessionDate = document.getElementById('session-date').value;
+    const requireAuth = document.getElementById('require-auth-checkbox')?.checked || false;
     
     if (!sessionName || !sessionDate) {
         alert("Please provide a Session Name and Date.");
@@ -140,7 +141,7 @@ document.getElementById('create-survey-link-btn').addEventListener('click', asyn
     try {
         // Construct title from Session Name + Date for internal use
         const title = `${sessionName} | ${sessionDate}`;
-        const newSurveyId = await createSurvey(currentUser.email, title, currentFields);
+        const newSurveyId = await createSurvey(currentUser.email, title, currentFields, requireAuth);
         
         // Copy to clipboard
         const link = buildSurveyLink(newSurveyId);
@@ -453,6 +454,12 @@ async function loadSurveyDetails(survey) {
             columns = Object.keys(responses[0].responseData);
         }
 
+        // Add Auth columns if applicable
+        if (survey.isAuthenticated) {
+            columns.unshift('Verification Code');
+            columns.unshift('Email');
+        }
+
         // Render Headers
         let headHtml = '<tr>';
         columns.forEach(col => {
@@ -475,7 +482,12 @@ async function loadSurveyDetails(survey) {
             rowsHtml += '<tr>';
             const exportRow = {};
             columns.forEach(col => {
-                const val = res.responseData[col] || '-';
+                // Check direct properties first for Auth fields, then responseData
+                let val = '';
+                if (col === 'Email') val = res.email || '-';
+                else if (col === 'Verification Code') val = res.verificationCode || '-';
+                else val = res.responseData[col] || '-';
+
                 // Check if this column is a rating col to aggregate stats
                 if (ratingColumns.includes(col)) {
                     const numVal = parseFloat(val);

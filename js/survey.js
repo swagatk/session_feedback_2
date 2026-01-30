@@ -1,4 +1,4 @@
-import { getSurveyById, saveSurveyResponse } from './db-service.js';
+import { getSurveyById, saveSurveyResponse, checkEmailSubmission } from './db-service.js';
 
 const urlParams = new URLSearchParams(window.location.search);
 const surveyId = urlParams.get('id');
@@ -9,20 +9,16 @@ const fieldsContainer = document.getElementById('survey-fields');
 const messageEl = document.getElementById('message');
 const submitBtn = document.getElementById('submit-btn');
 
+// State for Auth
+let isAuthRequired = false;
+let userEmail = '';
+let verificationCode = '';
+let isVerified = false;
+
 async function init() {
     if (!surveyId) {
         titleEl.textContent = "Survey Not Found";
         messageEl.textContent = "No survey ID provided in URL.";
-        return;
-    }
-
-    // New Duplicate Check: Use LocalStorage instead of IP
-    // IP check blocks everyone on the same University/Office network (same public IP).
-    const storageKey = `survey_submitted_${surveyId}`;
-    if (localStorage.getItem(storageKey)) {
-        titleEl.textContent = "Submission Already Received";
-        messageEl.textContent = "You have already submitted feedback for this session.";
-        formEl.style.display = 'none';
         return;
     }
 
@@ -32,6 +28,17 @@ async function init() {
             titleEl.textContent = "Survey Not Found";
             messageEl.textContent = "The survey you are looking for does not exist.";
             return;
+        }
+
+        // New Duplicate Check: Use LocalStorage for Anonymous, skip if Auth required (handled by email check)
+        if (!survey.isAuthenticated) {
+            const storageKey = `survey_submitted_${surveyId}`;
+            if (localStorage.getItem(storageKey)) {
+                titleEl.textContent = "Submission Already Received";
+                messageEl.textContent = "You have already submitted feedback for this session.";
+                formEl.style.display = 'none';
+                return;
+            }
         }
 
         renderForm(survey);
@@ -44,7 +51,6 @@ async function init() {
 // IP Check removed
 
 function renderForm(survey) {
-
     // Block deactivated surveys
     if (survey.active === false) {
         titleEl.textContent = "Survey Closed";
@@ -64,6 +70,120 @@ function renderForm(survey) {
         titleEl.after(dateSpan);
     }
 
+    if (survey.isAuthenticated) {
+        isAuthRequired = true;
+        renderAuthUI(survey);
+    } else {
+        renderSurveyFields(survey);
+    }
+}
+
+function renderAuthUI(survey) {
+    // Clear fields just in case
+    fieldsContainer.innerHTML = '';
+    submitBtn.style.display = 'none';
+
+    const authContainer = document.createElement('div');
+    authContainer.className = 'auth-container';
+    authContainer.style.background = '#f9f9f9';
+    authContainer.style.padding = '20px';
+    authContainer.style.borderRadius = '8px';
+    authContainer.style.marginBottom = '20px';
+    authContainer.innerHTML = `
+        <div id="email-step">
+            <h3>Email Verification Required</h3>
+            <p style="font-size:0.9em; color:#666;">Enter your email to receive a verification code.</p>
+            <div class="form-field">
+                <label>Email Address</label>
+                <input type="email" id="auth-email" placeholder="student@university.ac.uk">
+            </div>
+            <button type="button" id="send-code-btn" class="secondary">Send Verification Code</button>
+        </div>
+
+        <div id="code-step" style="display:none;">
+            <h3>Enter Verification Code</h3>
+            <p style="font-size:0.9em; color:#666;" id="code-msg">Code sent to your email.</p>
+            <div class="form-field">
+                <label>Verification Code</label>
+                <input type="text" id="auth-code" placeholder="e.g. A1B2C3">
+            </div>
+            <button type="button" id="verify-code-btn" class="secondary">Verify & Start Survey</button>
+            <div style="margin-top:10px;">
+                <small><a href="#" id="resend-link">Resend Code</a></small>
+            </div>
+        </div>
+    `;
+    
+    fieldsContainer.appendChild(authContainer);
+
+    // Event Listeners for Auth
+    document.getElementById('send-code-btn').onclick = async () => {
+        const emailInput = document.getElementById('auth-email');
+        const email = emailInput.value.trim();
+        
+        if (!email || !email.includes('@')) {
+            alert("Please enter a valid email address.");
+            return;
+        }
+
+        const btn = document.getElementById('send-code-btn');
+        btn.disabled = true;
+        btn.textContent = "Checking...";
+
+        try {
+            // Check for duplicate submission
+            const exists = await checkEmailSubmission(survey.id, email);
+            if (exists) {
+                alert("This email has already submitted feedback for this survey.");
+                btn.disabled = false;
+                btn.textContent = "Send Verification Code";
+                return;
+            }
+
+            // Generate & Send Code
+            userEmail = email;
+            verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            
+            console.log(`[SIMULATION] Sending Email to ${email} with code: ${verificationCode}`);
+            alert(`[SIMULATION] Email Sent!\n\nTo ensure privacy in this demo, we won't actually send an email.\n\nYour Verification Code is: ${verificationCode}\n\nPlease enter this code to proceed.`);
+
+            // Move to next step
+            document.getElementById('email-step').style.display = 'none';
+            document.getElementById('code-step').style.display = 'block';
+            document.getElementById('code-msg').textContent = `Code sent to ${email}`;
+
+        } catch (error) {
+            console.error(error);
+            alert("Error checking email status. Please try again.");
+            btn.disabled = false;
+            btn.textContent = "Send Verification Code";
+        }
+    };
+
+    document.getElementById('verify-code-btn').onclick = () => {
+        const input = document.getElementById('auth-code').value.trim().toUpperCase();
+        if (input === verificationCode) {
+            isVerified = true;
+            // success
+            authContainer.innerHTML = `
+                <div style="color:green; text-align:center; padding:10px;">
+                    <strong><i class="fas fa-check-circle"></i> Verified!</strong><br>
+                    ${userEmail}
+                </div>
+            `;
+            renderSurveyFields(survey);
+        } else {
+            alert("Invalid Code. Please try again.");
+        }
+    };
+
+    document.getElementById('resend-link').onclick = (e) => {
+        e.preventDefault();
+        alert(`Your Verification Code is: ${verificationCode}`);
+    };
+}
+
+function renderSurveyFields(survey) {
     survey.fields.forEach((field, index) => {
         const div = document.createElement('div');
         div.className = 'form-field';
@@ -113,6 +233,13 @@ function renderForm(survey) {
 
 formEl.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Safety check for auth
+    if (isAuthRequired && !isVerified) {
+        alert("Please complete the email verification first.");
+        return;
+    }
+
     submitBtn.disabled = true;
     submitBtn.textContent = 'Submitting...';
 
@@ -124,27 +251,50 @@ formEl.addEventListener('submit', async (e) => {
     }
 
     try {
-        const storageKey = `survey_submitted_${surveyId}`;
-        /* Double-check before submitting */
-        if (localStorage.getItem(storageKey)) {
-             messageEl.textContent = "You have already submitted feedback.";
-             formEl.style.display = 'none';
-             return;
+        if (!isAuthRequired) {
+            const storageKey = `survey_submitted_${surveyId}`;
+            if (localStorage.getItem(storageKey)) {
+                 messageEl.textContent = "You have already submitted feedback.";
+                 formEl.style.display = 'none';
+                 return;
+            }
         }
 
-        await saveSurveyResponse(surveyId, data); // No IP passed
+        // Save Response with Auth Data if applicable
+        await saveSurveyResponse(
+            surveyId, 
+            data, 
+            null, // IP
+            isAuthRequired ? userEmail : null,       // Email
+            isAuthRequired ? verificationCode : null // Code
+        );
         
-        // Mark as submitted locally
-        localStorage.setItem(storageKey, 'true');
+        if (!isAuthRequired) {
+            const storageKey = `survey_submitted_${surveyId}`;
+            localStorage.setItem(storageKey, 'true');
+        }
         
         formEl.style.display = 'none';
-        titleEl.textContent = "Thank You!";
-        messageEl.style.color = "green";
-        messageEl.textContent = "Your feedback has been submitted successfully.";
         
         // Remove subtitle if exists
         const p = document.querySelector('p');
         if(p) p.style.display = 'none';
+        
+        // Success Message
+        titleEl.textContent = "Thank You!";
+        messageEl.style.color = "green";
+        
+        if (isAuthRequired) {
+            messageEl.innerHTML = `
+                Your feedback has been submitted successfully.<br><br>
+                <strong>Verification Record:</strong><br>
+                Email: ${userEmail}<br>
+                Code: ${verificationCode}
+            `;
+        } else {
+            messageEl.textContent = "Your feedback has been submitted successfully.";
+        }
+
 
     } catch (error) {
         submitBtn.disabled = false;

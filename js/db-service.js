@@ -14,12 +14,13 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // Create a new survey
-export async function createSurvey(userEmail, title, fields) {
+export async function createSurvey(userEmail, title, fields, isAuthenticated = false) {
     try {
         const docRef = await addDoc(collection(db, "surveys"), {
             createdBy: userEmail,
             title: title,
             fields: fields, // Array of field objects { label, type, options }
+            isAuthenticated: isAuthenticated,
             createdAt: serverTimestamp(),
             active: true
         });
@@ -53,18 +54,32 @@ export async function getSurveyById(surveyId) {
 }
 
 // Save a response to a survey
-export async function saveSurveyResponse(surveyId, responseData, ipAddress = null) {
+export async function saveSurveyResponse(surveyId, responseData, ipAddress = null, email = null, verificationCode = null) {
     try {
         await addDoc(collection(db, "responses"), {
             surveyId: surveyId,
             responseData: responseData,
             ip: ipAddress || null,
+            email: email || null,
+            verificationCode: verificationCode || null,
             submittedAt: serverTimestamp()
         });
     } catch (error) {
         console.error("Error saving response: ", error);
         throw error;
     }
+}
+
+// Check if an email has already submitted a response for a specific survey
+export async function checkEmailSubmission(surveyId, email) {
+    if (!email) return false;
+    const q = query(
+        collection(db, 'responses'), 
+        where('surveyId', '==', surveyId), 
+        where('email', '==', email)
+    );
+    const snap = await getDocs(q);
+    return !snap.empty;
 }
 
 // Get responses for a specific survey
