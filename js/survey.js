@@ -1,5 +1,16 @@
 import { getSurveyById, saveSurveyResponse, checkEmailSubmission } from './db-service.js';
 
+// ==========================================
+// EMAILJS CONFIGURATION
+// ==========================================
+// REPLACE 'YOUR_PUBLIC_KEY' with your actual Public Key from EmailJS Dashboard -> Account -> General
+const EMAIL_PUBLIC_KEY = 'Ln-snatCWz9w2RZiC'; 
+
+// Your Service & Template IDs (Already updated from your previous edits)
+const EMAIL_SERVICE_ID = 'service_ivl2px2';
+const EMAIL_TEMPLATE_ID = 'template_as2qt1e'; 
+// ==========================================
+
 const urlParams = new URLSearchParams(window.location.search);
 const surveyId = urlParams.get('id');
 
@@ -144,14 +155,17 @@ function renderAuthUI(survey) {
             userEmail = email;
             verificationCode = Math.random().toString(36).substring(2, 8).toUpperCase();
             
-            // EmailJS Configuration - REPLACE THESE
-            const SERVICE_ID = 'service_ivl2px2';
-            const TEMPLATE_ID = 'template_as2qt1e'; 
-
             try {
                 btn.textContent = "Sending Email...";
-                // Using global emailjs object loaded in HTML
-                await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+                
+                // Initialize EmailJS here to ensure Public Key is used
+                if (typeof emailjs !== 'undefined') {
+                    emailjs.init(EMAIL_PUBLIC_KEY);
+                } else {
+                    throw new Error("EmailJS SDK not loaded. Please check internet connection.");
+                }
+
+                await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, {
                     to_email: userEmail,
                     code: verificationCode,
                     survey_title: survey.title.split('|')[0].trim() || 'Session Feedback'
@@ -166,7 +180,8 @@ function renderAuthUI(survey) {
 
             } catch (err) {
                 console.error('EmailJS Error:', err);
-                alert("Failed to send email. Please check console or try again.");
+                // SHOW THE ACTUAL ERROR MESSAGE
+                alert("Failed to send email:\n" + (err.text || JSON.stringify(err))); 
                 btn.disabled = false;
                 btn.textContent = "Send Verification Code";
             }
@@ -208,10 +223,8 @@ function renderAuthUI(survey) {
         link.style.pointerEvents = 'none';
 
         try {
-            const SERVICE_ID = 'YOUR_SERVICE_ID';
-            const TEMPLATE_ID = 'YOUR_TEMPLATE_ID'; 
-            
-            await emailjs.send(SERVICE_ID, TEMPLATE_ID, {
+            // Use the constants defined at the top
+            await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, {
                 to_email: userEmail,
                 code: verificationCode,
                 survey_title: survey.title.split('|')[0].trim() || 'Session Feedback'
@@ -219,7 +232,7 @@ function renderAuthUI(survey) {
             alert(`Code re-sent to ${userEmail}`);
         } catch(err) {
             console.error(err);
-            alert("Failed to resend email.");
+             alert("Failed to resend email:\n" + (err.text || JSON.stringify(err)));
         } finally {
             link.textContent = originalText;
             link.style.pointerEvents = 'auto';
