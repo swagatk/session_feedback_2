@@ -56,12 +56,15 @@
                         <span class="add-link" onclick="window.addRatingField()"><i class="fas fa-plus"></i> Add Rating Field</span>
                         <span class="add-link" onclick="window.addCommentField()"><i class="fas fa-plus"></i> Add Comment Field</span>
                     </div>
+                </div>
 
-                    <div style="margin-top: 15px;">
-                        <label style="font-weight: normal; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" id="require-auth-checkbox" style="width: auto; margin:0;">
-                            <span>Require Email Execution / Authenticated</span>
-                        </label>
+                <div class="form-group" style="padding: 12px; background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 6px; margin-top: 15px;">
+                    <label style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px; margin: 0; color: #2c3e50;">
+                        <input type="checkbox" id="require-auth-checkbox" style="width: auto; margin: 0; transform: scale(1.2);">
+                        <span><i class="fas fa-shield-alt" style="color: #27ae60;"></i> Require Email Verification (Authenticated Survey)</span>
+                    </label>
+                    <div style="font-size: 0.85em; color: #7f8c8d; margin-top: 5px; margin-left: 26px;">
+                        Respondents must verify their email to submit. Prevents duplicate submissions.
                     </div>
                 </div>
 
